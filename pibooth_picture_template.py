@@ -111,6 +111,8 @@ class TemplateParser(object):
             size = (px(template.attrib['pageWidth'], dpi), px(template.attrib['pageHeight'], dpi))
             orientation = pictures.PORTRAIT if size[0] < size[1] else pictures.LANDSCAPE
 
+            LOGGER.info("size0 = %i, size1 = %i", size[0], size[1])
+
             shapes = []
             distinct_capture_count = set()
             for cell in template.iter('mxCell'):
@@ -155,26 +157,28 @@ class TemplateParser(object):
                     "Several templates with {} captures are defined".format(len(distinct_capture_count)))
             subdata['shapes'] = shapes
             subdata['size'] = size
-            subdata['orientation'] = orientation
+            #subdata['orientation'] = orientation
+            subdata['orientation'] = pictures.LANDSCAPE
 
             # Calculate the orientation majority for this template
             captures = [shape for shape in shapes if shape.type == TemplateShapeParser.TYPE_CAPTURE]
             texts = [shape for shape in shapes if shape.type == TemplateShapeParser.TYPE_TEXT]
-            portraits = [shape for shape in captures if shape.width < shape.height]
-            if len(portraits) * 1.0 / len(captures) >= 0.5:
-                subdata['captures_orientation'] = pictures.PORTRAIT
-            else:
-                subdata['captures_orientation'] = pictures.LANDSCAPE
+            portraits = [shape for shape in shapes if shape.width < shape.height]
+            #if len(portraits) * 1.0 / len(captures) >= 0.5:
+            #    subdata['captures_orientation'] = pictures.PORTRAIT
+            #else:
+            #    subdata['captures_orientation'] = pictures.LANDSCAPE
+            subdata['captures_orientation'] = pictures.LANDSCAPE
 
-            LOGGER.info("Found template '%s': %s captures - %s texts - %s others", template.get('name'),
-                        len(captures), len(texts), len(shapes) - (len(captures) + len(texts)))
+            LOGGER.info("Found template '%s': %s captures - %s texts - %s others - orientation: %s - captures_orientation: %s", template.get('name'),
+                        len(captures), len(texts), len(shapes) - (len(captures) + len(texts)), subdata['orientation'], subdata['captures_orientation'])
 
         if not data:
             raise TemplateParserError("No template found in '{}'".format(self.filename))
         return data
 
     def get(self, key, capture_number, orientation=pictures.PORTRAIT):
-        """Return the value of the 'key' info for the given caputures numbers and orientation.
+        """Return the value of the 'key' info for the given captures numbers and orientation.
 
         :param key: key info to get
         :type key: str
